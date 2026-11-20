@@ -20,7 +20,11 @@ def resolve(events, cutoff):
             chain.append(ordered[0])
             issues.extend(evidence('DUP_EVENT', e.line, key, raw=e.export()) for e in ordered[1:])
         if conflict:
-            issues.append(evidence('REV_CONFLICT', conflict[0], key, lines=conflict))
+            # 同版异内容：整单暂停，两侧源行连同内容一并保留，不按后到覆盖。
+            sides = [e.export() for e in sorted(
+                (e for rev in revisions.values() for e in rev if e.line in conflict),
+                key=lambda e: e.line)]
+            issues.append(evidence('REV_CONFLICT', conflict[0], key, lines=conflict, records=sides))
             continue
         if (chain[0].action != 'reserve' or chain[0].revision != 1 or any(e.action != 'move' for e in chain[1:-1])
                 or (len(chain) > 1 and chain[-1].action == 'reserve')

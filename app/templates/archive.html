@@ -2,8 +2,12 @@
 {% block table_title %}值班记录{% endblock %}
 {% block feature %}
 <section class="panel proof">
-  <div class="panel-top"><h2>封存凭证</h2><a class="solid" href="{{ url_for('archive.export_run',run_id=run.id) }}">下载复核凭证</a></div>
-  <dl class="proof-list"><dt>输入摘要</dt><dd>{{ view.manifest.input_sha256 }}</dd><dt>结果摘要</dt><dd>{{ view.manifest.result_sha256 }}</dd><dt>生成时间</dt><dd>{{ view.manifest.created_at }}</dd><dt>运算耗时</dt><dd>{{ view.manifest.elapsed_ms }} ms</dd></dl>
-  <div class="seal-actions"><button id="rerun" type="button">复算本批</button><button id="print" type="button">打印账簿</button></div>
+  <div class="panel-top"><h2>封存凭证</h2>
+    {% if view.manifest.balanced %}<a class="solid" href="{{ url_for('archive.export_run',run_id=run.id) }}">下载复核凭证</a>
+    {% else %}<b class="badge">未对平 · 不出具正式凭证</b>{% endif %}
+  </div>
+  <dl class="proof-list"><dt>输入摘要</dt><dd>{{ view.manifest.input_sha256 }}</dd><dt>结果摘要</dt><dd>{{ view.manifest.result_sha256 }}</dd><dt>生成时间</dt><dd>{{ view.manifest.created_at }}</dd><dt>运算耗时</dt><dd>{{ view.manifest.elapsed_ms }} ms</dd><dt>对平状态</dt><dd>{{ '已对平，可出具正式凭证' if view.manifest.balanced else '未对平，仅供复核' }}</dd></dl>
+  <p id="verify-status" role="status"></p>
+  <div class="seal-actions"><button id="verify" type="button">按原输入复核</button><button id="rerun" type="button">复算本批</button><button id="print" type="button">打印账簿</button></div>
 </section>
 {% endblock %}

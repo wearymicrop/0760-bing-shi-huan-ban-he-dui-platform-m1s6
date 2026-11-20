@@ -9,9 +9,13 @@
 | `events` | `booking`,`revision`,`timestamp`,`action` | 订单号、正整数修订号、发生时刻、动作 |
 | `events` | `owner`,`rink`,`start`,`end` | 新订与改单必填。撤销只读身份键和修订信息 |
 | `debit.rows` | `day`,`start`,`end`,`debit`,`cash`,`waived`,`disputed` | 本地自然日、分钟区间及分钟分解 |
-| `debit.rows` | `windows`,`passes`,`peers`,`codes` | 决定结果的营业行、权益行、冲突订单行、原因码 |
+| `debit.rows` | `windows`,`passes`,`peers`,`codes`,`voucher`,`voucher_line` | 决定结果的营业行、权益行、冲突订单行、原因码、采用的券版本与券源行 |
+| `debit.settlements` | `versions`,`unredeemed`,`self_pay`,`basis`,`contested_with`,`state` | 逐单采用的有效券版本链、未兑现分钟（自付+争议）、自付分钟、争议依据、冲突另一方、结论 |
+| `debit.ruling` | `adopted`,`alternative`,`same_allocation`,`shifts`,`contention`,`basis` | 本班采用的顺序、对照顺序下改由谁自付、同券争用队列与裁决依据 |
 | `balance.tally` | `booked`,`difference`,`voucher_difference` | 有效预订分钟、分钟差、券已用差 |
-| `manifest` | `version`,`created_at`,`cutoff`,`elapsed_ms`,`input_sha256`,`result_sha256` | 规则版、封存时刻、结算截点、耗时和两种摘要 |
+| `balance.vouchers` | `allowed`,`used`,`remaining`,`ledger`,`requests`,`difference`,`balanced` | 逐券核发、已用、剩余、明细扣券、兑现队列与对平结论 |
+| `balance.checks` | `per_order`,`per_voucher`,`voucher_total` | 逐单守恒、逐券对平、全场扣券合计是否通过 |
+| `manifest` | `version`,`created_at`,`cutoff`,`elapsed_ms`,`input_sha256`,`result_sha256`,`balanced` | 规则版、封存时刻、结算截点、耗时、两种摘要与对平状态 |
 
 ## 裁决
 
@@ -19,6 +23,19 @@
 
 以午夜、营业窗端点、同场同队券版本端点切分每单。每段只可得到一种营业分类。两个异类营业窗重叠，或多个权益同时有效，相交片段进入争议。两个预订共同占用同一冰面时，两单一并待核对。收费段依开场时间逐段使用权益预算，按源版本全班累计。该段余额不够的部分记自付，豁免不扣权益。相同时点以冰面和订单号稳定排序。
 
-每个有效预订分钟拆为扣券、自付、豁免、争议。每券的核发分钟等于已用加剩余。复核账按单检查，另检查全场扣券总数和券已用总数。
+两方诉求的裁决：时段切分本身已保证旧券只在其有效期内兑现（值班组要的「旧券先兑现」），
+因此在午夜换版处不会出现新券挤占旧券额度；真正的争用只发生在同一张券的余额上，采用
+「最早开场的订单先占」，其余订单按同一规则依次转为自付。`debit.ruling.contention` 按兑现
+先后列出争用队列，被挡下的分钟与 `LIMIT` 原因码可逐条复核。对照顺序（到期券先排队）只做
+反事实重算，不写入正式分配；若会让别的订单承担自付，`ruling.shifts` 会列出差额。
+
+**凭证与对平**：逐单分钟守恒、逐券核发 = 已用 + 剩余且已用与明细累计扣券一致、全场扣券合计
+等于券已用合计，三项都通过才在封存清单标记 `balanced: true`。只有 `balanced` 且原字节复算
+结果摘要一致的批次才能导出正式凭证；否则 `GET /api/runs/{id}/export` 返回 409 `UNBALANCED`。
+`GET /api/runs/{id}/verify` 只读原字节重跑，不新增批次也不追加扣券，用于交接对账。相同输入
+使用同一批次号，重跑与复核都不会改变各券的已用与剩余。
+
+每单的 `versions` 是按时段列出的有效券版本链（跨午夜会是两张），`unredeemed` 是未由任何券
+折抵的分钟，`basis` 给出每段的争议或自付依据，`contested_with` 指向同场冲突的另一订单源行。
 
 凭证导出一个 JSON，内含原始交换文本、完整阶段结论及运行清单。`input_sha256` 对上传原字节计算，`result_sha256` 对排序字段的 UTF-8 JSON 结果计算。样例中的现金列是待自付分钟，价格由票务系统维护。

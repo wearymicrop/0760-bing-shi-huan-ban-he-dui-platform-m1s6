@@ -60,4 +60,19 @@ file.addEventListener('change', () => {
     file.value = '';
 });
 rerun?.addEventListener('click', () => submit(`/api/runs/${runId}/rerun`, {}, false));
+document.querySelector('#verify')?.addEventListener('click', async event => {
+    const status = document.querySelector('#verify-status');
+    event.currentTarget.disabled = true;
+    try {
+        const response = await fetch(`/api/runs/${runId}/verify`);
+        const result = await response.json();
+        status.textContent = result.same_result && result.credential
+            ? `复核一致：分钟与权益已对平，可出具正式凭证（${result.tally.booked} 分钟）。`
+            : `复核未通过：差额 ${result.tally.difference}，权益差 ${result.tally.voucher_difference}，不出具凭证。`;
+    } catch (error) {
+        status.textContent = '无法复核，请稍后重试。';
+    } finally {
+        event.currentTarget.disabled = false;
+    }
+});
 document.querySelector('#print')?.addEventListener('click', () => print());

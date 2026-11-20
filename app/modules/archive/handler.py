@@ -34,7 +34,11 @@ def detail(run_id):
 
 @routes.get('/api/runs/<run_id>/export')
 def export_run(run_id):
-    raw, bundle = service.get(current_app.config['DB_PATH'], run_id)
-    document = bundle | {'original_json': raw.decode('utf-8')}
+    document = service.credential(current_app.config['DB_PATH'], run_id)
     return Response(manifest.encode(document), mimetype='application/json',
                     headers={'Content-Disposition': f'attachment; filename="rink-{run_id[:12]}.json"'})
+
+
+@routes.get('/api/runs/<run_id>/verify')
+def verify_run(run_id):
+    return jsonify(service.verify(current_app.config['DB_PATH'], run_id))

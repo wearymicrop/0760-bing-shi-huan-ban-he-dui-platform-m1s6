@@ -87,6 +87,10 @@ summary { cursor: pointer; }
 dl { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 6px 14px; }
 dd { margin: 0; overflow-wrap: anywhere; font: 13px/1.55 var(--font-num); }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #eef4f3; padding: 8px; font-size: 12px; }
+.proof p { margin: 0 0 10px; max-width: 78ch; }
+.mini { min-width: 0; white-space: normal; margin-top: 8px; font-size: 13px; }
+.mini th, .mini td { height: 31px; padding: 4px 8px; }
+.mini th { position: static; background: #e6efed; }
 .equation { display: flex; gap: clamp(8px,2vw,24px); align-items: baseline; flex-wrap: wrap; font: 600 clamp(17px,3vw,27px)/1.25 var(--font-num); }
 .equation strong { color: var(--accent); }
 .equation small { display: block; font: 12px var(--font-ui); color: var(--muted); }

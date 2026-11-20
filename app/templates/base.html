@@ -68,6 +68,7 @@
     {% for key,label in [('lines','相关行'),('passes','权益版本'),('windows','营业窗'),('peers','相交预订')] %}
       {% if issue.get(key) %}<div class="reference">{{ label }}　{{ issue[key]|join('、') }}</div>{% endif %}
     {% endfor %}
+    {% if issue.get('records') %}{% for record in issue.records %}<pre>{{ record|tojson(indent=2) }}</pre>{% endfor %}{% endif %}
     {% if issue.raw is defined %}<pre>{{ issue.raw|tojson(indent=2) }}</pre>{% endif %}
     </details>
   {% else %}<p>本页无需复核。</p>{% endfor %}

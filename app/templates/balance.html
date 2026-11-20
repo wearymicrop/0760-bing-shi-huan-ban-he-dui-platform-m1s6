@@ -2,7 +2,45 @@
 {% block table_title %}逐单核对{% endblock %}
 {% block feature %}
 <section class="panel proof">
-  <div class="panel-top"><h2>分钟守恒</h2><b class="badge" id="balance-status">{{ '分钟与权益已对平' if view.balanced else '存在待调差额' }}</b></div>
+  <div class="panel-top"><h2>分钟守恒</h2><b class="badge" id="balance-status">{{ '分钟与权益已对平' if view.balanced else '存在待调差额 · 非正式凭证' }}</b></div>
   <div class="equation"><strong>{{ tally.booked }}</strong><i>=</i><span>{{ tally.debit }}<small>扣券</small></span><i>+</i><span>{{ tally.cash }}<small>自付</small></span><i>+</i><span>{{ tally.waived }}<small>豁免</small></span><i>+</i><span>{{ tally.disputed }}<small>争议</small></span></div>
+  <div class="tape-guide">
+    <span>逐单对平 {{ '通过' if view.checks.per_order else '未通过' }}</span>
+    <span>逐券对平 {{ '通过' if view.checks.per_voucher else '未通过' }}</span>
+    <span>券已用合计差 {{ tally.voucher_difference }}</span>
+    <span>{{ view.checks.orders }} 单 · {{ view.checks.vouchers }} 券</span>
+  </div>
+</section>
+<section class="panel proof" id="ruling">
+  <div class="panel-top"><h2>本班裁决</h2><b class="badge">{{ view.ruling.adopted_label }}</b></div>
+  <p>{{ view.ruling.basis }}</p>
+  <p class="tape-guide">
+    <span>对照顺序：{{ view.ruling.alternative_label }}</span>
+    {% if view.ruling.same_allocation %}<span>本次两种顺序分配到同一结果，无订单改由自付。</span>
+    {% else %}<span>本次两种顺序会改由这些订单承担自付：</span>{% endif %}
+  </p>
+  {% if not view.ruling.same_allocation %}
+  <table class="mini"><thead><tr><th>预订</th><th class="num">本班自付</th><th class="num">对照自付</th><th class="num">差</th></tr></thead>
+    <tbody>{% for shift in view.ruling.shifts %}<tr><td>{{ shift.key }}</td><td class="num">{{ shift.adopted }}</td><td class="num">{{ shift.alternative }}</td><td class="num">{{ shift.delta }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% endif %}
+</section>
+<section class="panel proof" id="contention">
+  <div class="panel-top"><h2>同券争用顺序</h2><span class="badge">按兑现先后</span></div>
+  <table class="mini"><thead><tr><th>权益</th><th>队伍</th><th class="num">核发</th><th class="num">兑现</th><th class="num">挡下</th><th>争用订单</th><th>原因</th></tr></thead>
+    <tbody>
+    {% for ticket in view.ruling.contention %}
+      <tr><td>{{ ticket.key }}</td><td>{{ ticket.owner }}</td><td class="num">{{ ticket.allowed }}</td><td class="num">{{ ticket.awarded }}</td><td class="num">{{ ticket.denied }}</td>
+        <td>{% for item in ticket.queue %}{{ item.booking }}（{{ item.award }}/{{ item.minutes }}）{% if not loop.last %} → {% endif %}{% endfor %}</td>
+        <td>{{ ticket.codes|join(' · ') or '—' }}</td></tr>
+    {% else %}<tr><td colspan="7">本班没有争用</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+<section class="panel proof">
+  <div class="panel-top"><h2>券已用与剩余</h2></div>
+  <table class="mini"><thead><tr><th>权益</th><th>队伍</th><th class="num">核发</th><th class="num">已用</th><th class="num">剩余</th><th class="num">明细扣券</th><th>对平</th></tr></thead>
+    <tbody>{% for v in view.vouchers %}<tr><td>{{ v.key }}</td><td>{{ v.owner }}</td><td class="num">{{ v.allowed }}</td><td class="num">{{ v.used }}</td><td class="num">{{ v.remaining }}</td><td class="num">{{ v.ledger }}</td><td>{{ '通过' if v.balanced else '差异 ' ~ v.difference }}</td></tr>{% else %}<tr><td colspan="7">本班没有权益版本</td></tr>{% endfor %}</tbody>
+  </table>
 </section>
 {% endblock %}

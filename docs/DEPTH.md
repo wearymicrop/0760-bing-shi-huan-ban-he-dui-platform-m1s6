@@ -28,8 +28,13 @@
 | TRAP-23 | 夜场西冰 22:15 恰好换类 | 两个窗口重复收权 | 半开区间 | `app/modules/calendar/rules.py` | `tests/test_calendar.py::test_adjacent_boundary_has_single_owner` |
 | TRAP-25 | 夜场飞雪两张券期间重叠 | 随意扣券责任 | 停扣重叠片段并给出双方权益行 | `app/modules/passes/rules.py` | `tests/test_passes.py::test_overlapping_entitlements_hold_minutes` |
 | TRAP-26 | 夜场 `0042` 撤销跨过当班截点 | 改写已交接预订 | 延后事件待下班，保持本班有效订单 | `app/modules/changes/rules.py` | `tests/test_changes.py::test_late_cancellation_cannot_rewrite_published_view` |
+| TRAP-27 | 前台要最早订场先兑现、值班组要旧券先兑现 | 按源行或券余额随意排队，同单人重跑结果漂移 | 午夜切段先定券版本，同券余额不足时最早开场先占；两种顺序反事实对照列出改由谁自付 | `app/modules/debit/service.py` | `tests/test_settlement.py::test_same_input_replays_to_identical_allocation` |
+| TRAP-28 | 未对平批次被当成正式凭证交接 | 只要文件导出成功就视为可复核 | 逐单、逐券、合计三项通过才封存 `balanced`；未对平或结果摘要有漂移时导出 409 | `app/modules/archive/service.py` | `tests/test_credential.py::test_changed_views_block_credential` |
 
 ## 对账规则
 
 - 夜场有效预订分钟 340 = 扣券 70 + 自付 155 + 豁免 30 + 争议 85。
-- 券的各版本核发量逐项等于已用与剩余之和。有效累计扣券 = 当班权益已用量。
+- 券的各版本核发量逐项等于已用与剩余之和；逐券已用等于折抵明细中该券的累计扣券与兑现队列合计。
+- 有效累计扣券 = 当班权益已用量。
+- 未兑现分钟按单记为「自付 + 争议」；每单列出采用的有效券版本链与争议依据，冲突双方源行保留。
+- 正式凭证只在逐单、逐券、合计都通过时出具；`/api/runs/{id}/verify` 只读原字节复算，不新增扣券。
