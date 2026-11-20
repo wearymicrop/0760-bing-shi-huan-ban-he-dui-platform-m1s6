@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block table_title %}逐单核对{% endblock %}
+{% block feature %}
+<section class="panel proof">
+  <div class="panel-top"><h2>分钟守恒</h2><b class="badge" id="balance-status">{{ '分钟与权益已对平' if view.balanced else '存在待调差额' }}</b></div>
+  <div class="equation"><strong>{{ tally.booked }}</strong><i>=</i><span>{{ tally.debit }}<small>扣券</small></span><i>+</i><span>{{ tally.cash }}<small>自付</small></span><i>+</i><span>{{ tally.waived }}<small>豁免</small></span><i>+</i><span>{{ tally.disputed }}<small>争议</small></span></div>
+</section>
+{% endblock %}

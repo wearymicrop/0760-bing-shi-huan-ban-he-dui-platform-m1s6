@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block table_title %}事件上报{% endblock %}
+{% block feature %}
+<section class="panel proof"><div class="panel-top"><h2>上报动作</h2></div>
+  <div class="index-strip">{% for action,rows in view.rows|groupby('action') %}{% set label = {'reserve':'新订','move':'改单','cancel':'撤销'}[action] %}<button class="index" type="button" data-booking="{{ label }}">{{ label }}<b>{{ rows|length }} 条</b></button>{% endfor %}</div>
+</section>
+{% endblock %}

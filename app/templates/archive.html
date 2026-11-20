@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block table_title %}值班记录{% endblock %}
+{% block feature %}
+<section class="panel proof">
+  <div class="panel-top"><h2>封存凭证</h2><a class="solid" href="{{ url_for('archive.export_run',run_id=run.id) }}">下载复核凭证</a></div>
+  <dl class="proof-list"><dt>输入摘要</dt><dd>{{ view.manifest.input_sha256 }}</dd><dt>结果摘要</dt><dd>{{ view.manifest.result_sha256 }}</dd><dt>生成时间</dt><dd>{{ view.manifest.created_at }}</dd><dt>运算耗时</dt><dd>{{ view.manifest.elapsed_ms }} ms</dd></dl>
+  <div class="seal-actions"><button id="rerun" type="button">复算本批</button><button id="print" type="button">打印账簿</button></div>
+</section>
+{% endblock %}

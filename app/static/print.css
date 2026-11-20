@@ -1,0 +1,8 @@
+@media print {
+  body { display: block; background: white; color: black; }
+  nav, .controls, .seal-actions, .panel-top label, .skip { display: none; }
+  main { padding: 0; }
+  .desk-grid { display: block; }
+  .panel { break-inside: avoid; margin-bottom: 8mm; }
+  .scrollbox, .issue-list, .track-rows { max-height: none; overflow: visible; }
+}

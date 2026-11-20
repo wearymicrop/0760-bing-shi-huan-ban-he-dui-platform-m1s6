@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block table_title %}折抵明细{% endblock %}
+{% block feature %}
+<section class="panel timetable" aria-label="营业日历分解">
+  <div class="panel-top"><h2>占用时段分解</h2><span class="badge">{{ tally.booked }} 分钟</span></div>
+  <div class="tape-guide"><span class="marker debit">扣券</span><span class="marker cash">自付</span><span class="marker waived">豁免</span><span class="marker disputed">争议</span></div>
+  {% for day,rows in view.rows|groupby('day') %}
+    <div class="day-track">
+      <time datetime="{{ day }}">{{ day[5:]|replace('-', '/') }}</time>
+      <div class="track-rows">
+        {% for row in rows %}
+          <button class="ticket {{ row.stage }}" type="button" data-booking="{{ row.key }}" title="{{ row.rink }} {{ row.start[11:16] }} 至 {{ row.end[11:16] }}">{{ row.key }}<small>{{ row.start[11:16] }}–{{ row.end[11:16] }}</small></button>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}<p>当前场次没有占用。</p>{% endfor %}
+</section>
+{% endblock %}

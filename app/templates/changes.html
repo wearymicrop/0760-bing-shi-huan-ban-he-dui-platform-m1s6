@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block table_title %}本班兑现预订{% endblock %}
+{% block feature %}
+<section class="panel proof"><div class="panel-top"><h2>按场地查看结转</h2></div>
+  <div class="index-strip">{% for rink,rows in view.rows|groupby('rink') %}<button class="index" type="button" data-booking="{{ rink }}">{{ rink }}<b>{{ rows|length }} 单</b></button>{% endfor %}</div>
+</section>
+{% endblock %}

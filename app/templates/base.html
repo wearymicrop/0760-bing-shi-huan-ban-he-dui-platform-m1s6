@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} · 冰时换班核对台</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='ice.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='print.css') }}" media="print">
+  <script src="{{ url_for('static', filename='desk.js') }}" defer></script>
+</head>
+<body data-module="{{ module }}" data-run="{{ run.id }}">
+<a class="skip" href="#sheet">跳至当前账簿</a>
+<nav aria-label="值班模块">
+  <div class="mark"><div class="crest" aria-hidden="true"></div><span>冰时<br>值班簿</span></div>
+  {% for code, (label, unit, fields) in modules.items() %}
+    <a href="{{ url_for('pages.page',module=code,run=run.id) }}" {% if code == module %}aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+  <div class="shift"><span></span> 当班账务</div>
+</nav>
+<main id="sheet">
+  <header>
+    <div><div class="ledger-name">冰时换班核对台</div><h1>{{ title }}</h1></div>
+    <div class="controls">
+      <label class="choice"><span>内置场次</span><select id="sample">{% for id,label in samples.items() %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select></label>
+      <button id="run-sample" class="solid">载入场次</button>
+      <label class="upload"><span>导入记录</span><input id="source-file" type="file" accept=".json,application/json" aria-label="导入记录"></label>
+    </div>
+  </header>
+  <div id="run-feedback" role="status"></div>
+  <section class="kpis" aria-label="当前账簿指标">
+    {% for metric,value in view.metrics.items() %}
+      <div class="kpi"><b>{{ value }}</b><span>{{ metric }}</span></div>
+    {% endfor %}
+  </section>
+  <div class="desk-grid">
+    {% block feature %}{% endblock %}
+    <section class="panel record">
+      <div class="panel-top"><h2>{% block table_title %}登记明细{% endblock %}</h2><label>筛选<input id="filter" type="search" placeholder="编号或场地"></label></div>
+      <div class="scrollbox" tabindex="0" aria-label="登记记录">
+  <table id="ledger">
+    <thead><tr>{% for key,label in columns.items() %}<th scope="col" {% if key in ['line','booked','debit','cash','waived','disputed','difference','minutes'] %}class="num"{% endif %}>{{ label }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for row in view.rows %}
+        <tr>
+          {% for key in columns %}
+            {% set value = row.get(key, '') %}
+            <td {% if value is number %}class="num"{% endif %}>
+              {% if module == 'archive' and key == 'key' %}<a href="{{ url_for('pages.page',module='archive',run=row.run_id) }}">{{ value }}</a>
+              {% elif key == 'codes' %}{{ value|join(' · ') or '—' }}
+              {% elif value is string and value|length == 25 and 'T' in value %}<time datetime="{{ value }}">{{ value[5:16]|replace('T',' ') }}</time>
+              {% elif key == 'action' %}{{ {'reserve':'新订','move':'改单','cancel':'撤销'}.get(value, value) }}
+              {% elif value == '' %}—{% else %}{{ value }}{% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% else %}<tr><td colspan="{{ columns|length }}">暂无登记</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<div id="no-match" hidden>没有匹配记录</div>
+    </section>
+    <section class="panel exceptions" id="review">
+      <div class="panel-top"><h2>当班复核</h2><span class="badge">{{ view.issues|length }} 条</span></div>
+      <div class="issue-list">
+  {% for issue in view.issues %}
+    <details><summary><span class="dot"></span><b>{{ issue.detail }}</b><span class="issue-line">{{ issue.key or '源记录' }} / {{ issue.line }}</span></summary>
+    <dl><dt>原因码</dt><dd>{{ issue.code }}</dd>{% if issue.minutes is defined %}<dt>影响</dt><dd>{{ issue.minutes }} 分钟</dd>{% endif %}</dl>
+    {% for key,label in [('lines','相关行'),('passes','权益版本'),('windows','营业窗'),('peers','相交预订')] %}
+      {% if issue.get(key) %}<div class="reference">{{ label }}　{{ issue[key]|join('、') }}</div>{% endif %}
+    {% endfor %}
+    {% if issue.raw is defined %}<pre>{{ issue.raw|tojson(indent=2) }}</pre>{% endif %}
+    </details>
+  {% else %}<p>本页无需复核。</p>{% endfor %}
+</div>
+    </section>
+  </div>
+  <footer><span>账簿号 <code>{{ run.id[:12] }}</code>　·　{{ run.manifest.version }}</span><span>截点 {{ run.manifest.cutoff[:16]|replace('T',' ') }} UTC+08</span></footer>
+</main>
+</body>
+</html>
